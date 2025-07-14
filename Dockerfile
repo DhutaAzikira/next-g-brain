@@ -1,30 +1,45 @@
-# syntax=docker/dockerfile:1
-FROM node:20-alpine AS base
+# === Stage 1: Build the Application ===
+# Use a Node.js image to install dependencies and build the app
+FROM node:20-alpine AS builder
 
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Set the working directory
 WORKDIR /app
-COPY package.json pnpm-lock.yaml* ./
-RUN corepack enable pnpm && pnpm i --frozen-lockfile
 
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy package files and install all dependencies (including devDependencies)
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the source code
 COPY . .
-RUN corepack enable pnpm && pnpm build
 
-FROM base AS runner
+# Run the Next.js build command
+RUN npm run build
+
+
+# === Stage 2: Production Image ===
+# Start from a fresh, minimal Node.js image
+FROM node:20-alpine AS runner
+
+# Set the working directory
 WORKDIR /app
-ENV NODE_ENV production
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+
+# Set the environment to production for performance optimizations
+ENV NODE_ENV=production
+
+# Copy package files and install ONLY production dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy the built application from the 'builder' stage
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-USER nextjs
+
+# Copy the Next.js configuration file if it exists
+# Add other files like next.config.mjs if needed
+COPY --from=builder /app/next.config.js ./
+
+# Expose the port that Next.js runs on by default
 EXPOSE 3000
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-CMD ["node", "server.js"]
+
+# The command to start the optimized Next.js server
+CMD ["npm", "start"]
