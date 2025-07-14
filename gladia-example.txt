@@ -1,0 +1,637 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// --- TYPES AND INTERFACES ---
+interface UserDetails {
+  fullName: string;
+  email: string;
+  booking_code: string;
+}
+
+interface SessionData {
+  sessionId: string;
+}
+
+interface AudioProcessor {
+  stream: MediaStream | null;
+  context: AudioContext | null;
+  processor: ScriptProcessorNode | null;
+}
+
+interface HeyGenSessionInfo {
+  session_id: string;
+  url: string;
+  access_token: string;
+}
+
+interface BackendCommand {
+  type: 'new_question' | 'end_interview';
+  payload: {
+    text?: string;
+    [key: string]: any;
+  };
+}
+
+interface GladiaConfig {
+  encoding: string;
+  sample_rate: number;
+  model: string;
+  endpointing: number;
+  language_config: {
+    languages: string[];
+    code_switching: boolean;
+  };
+  maximum_duration_without_endpointing: number;
+}
+
+interface GladiaMessage {
+  type: 'speech_start' | 'transcript';
+  data?: {
+    is_final: boolean;
+    utterance: {
+      text: string;
+    };
+  };
+}
+
+interface HeyGenInitResponse {
+  data: {
+    token: string;
+  };
+}
+
+interface HeyGenSessionResponse {
+  data: HeyGenSessionInfo;
+}
+
+// Extend Window interface for LivekitClient
+declare global {
+  interface Window {
+    LivekitClient: any;
+    AudioContext: typeof AudioContext;
+    webkitAudioContext: typeof AudioContext;
+  }
+}
+
+// --- 1. CONFIGURATION & STATE ---
+let isUserTurn: boolean = false;
+let gladiaSocket: WebSocket | null = null;
+let controlSocket: WebSocket | null = null;
+let audioProcessor: AudioProcessor = {
+  stream: null,
+  context: null,
+  processor: null
+};
+let sessionId: string | null = null;
+let interviewTimer: NodeJS.Timeout | null = null;
+let isAvatarReady: boolean = false;
+
+// HeyGen State
+let heygenSessionInfo: HeyGenSessionInfo | null = null;
+let heygenRoom: any = null;
+let heygenMediaStream: MediaStream | null = null;
+let heygenSessionToken: string | null = null;
+
+// --- 2. DOM REFERENCES ---
+const startFormContainer = document.getElementById("start-form") as HTMLElement;
+const userDetailsForm = document.getElementById("user-details-form") as HTMLFormElement;
+const chatContainer = document.querySelector(".chat-container") as HTMLElement;
+const endScreen = document.getElementById("end-screen") as HTMLElement;
+const chatLog = document.getElementById("chat-log") as HTMLElement;
+const statusText = document.getElementById("status-text") as HTMLElement;
+const avatarVideo = document.getElementById("avatar-video") as HTMLVideoElement;
+const avatarPlaceholder = document.getElementById("avatar-placeholder") as HTMLElement;
+const avatarStatus = document.getElementById("avatar-status") as HTMLElement;
+const userCamVideo = document.getElementById("user-cam") as HTMLVideoElement;
+const timerDisplay = document.getElementById("timer") as HTMLElement;
+
+// --- 3. HELPER FUNCTIONS ---
+function estimateSpeechDuration(text: string): number {
+  const wordsPerMinute: number = 150;
+  const words: number = text.split(/\s+/).length;
+  return (words / wordsPerMinute) * 60 * 1000;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// --- 4. UI HELPER FUNCTIONS ---
+function addMessageToChat(text: string, type: 'user' | 'ai'): HTMLDivElement {
+  const messageElement = document.createElement("div");
+  messageElement.classList.add("message", `${type}-message`);
+  messageElement.innerText = text;
+  chatLog.appendChild(messageElement);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  return messageElement;
+}
+
+function showUserLoadingBubble(): void {
+  if (document.getElementById("user-loading-bubble")) return;
+  const bubble = document.createElement("div");
+  bubble.id = "user-loading-bubble";
+  bubble.classList.add("message", "loading-bubble");
+  bubble.innerHTML = `<span></span><span></span><span></span>`;
+  chatLog.appendChild(bubble);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function removeLoadingBubble(bubbleId: string): void {
+  const bubble = document.getElementById(bubbleId);
+  if (bubble) bubble.remove();
+}
+
+function showAiLoadingBubble(): void {
+  if (document.getElementById("ai-loading-bubble")) return;
+  const bubble = document.createElement("div");
+  bubble.id = "ai-loading-bubble";
+  bubble.classList.add("message", "loading-bubble", "ai");
+  bubble.innerHTML = `<span></span><span></span><span></span>`;
+  chatLog.appendChild(bubble);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+// --- 5. INTERVIEW TIMER & CAMERA ---
+function startInterviewTimer(minutes: number): void {
+  let duration: number = minutes * 60;
+  interviewTimer = setInterval(() => {
+    const mins: number = Math.floor(duration / 60);
+    const secs: number = duration % 60;
+    const displayMins: string = String(mins).padStart(2, "0");
+    const displaySecs: string = String(secs).padStart(2, "0");
+    timerDisplay.innerText = `${displayMins}:${displaySecs}`;
+
+    if (--duration < 0) {
+      if (interviewTimer) clearInterval(interviewTimer);
+      timerDisplay.innerText = "00:00";
+      addMessageToChat("Time is up. The interview will now conclude.", "ai");
+      endInterview();
+    }
+  }, 1000);
+}
+
+async function initializeUserCamera(): Promise<void> {
+  try {
+    const stream: MediaStream = await navigator.mediaDevices.getUserMedia({ 
+      video: true, 
+      audio: false 
+    });
+    userCamVideo.srcObject = stream;
+  } catch (error) {
+    console.error("Error accessing user camera:", error);
+    const userCamContainer = document.getElementById("user-cam-container");
+    if (userCamContainer) {
+      userCamContainer.innerHTML = `<p style="color: white; text-align: center; padding: 10px;">Could not access camera.</p>`;
+    }
+  }
+}
+
+// --- 6. INITIALIZATION & MAIN FLOW ---
+function init(): void {
+  userDetailsForm.addEventListener("submit", startInterview);
+}
+
+async function startInterview(event: Event): Promise<void> {
+  event.preventDefault();
+  const formData = new FormData(userDetailsForm);
+  const fullName = formData.get("fullName") as string;
+  const email = formData.get("email") as string;
+  const booking_code = formData.get("booking_code") as string;
+
+  console.log(
+    `LOG: Starting interview with fullName=${fullName}, email=${email}, booking_code=${booking_code}`
+  );
+  
+  if (!fullName || !email) {
+    alert("Please fill out all fields.");
+    return;
+  }
+
+  startFormContainer.style.display = "none";
+  chatContainer.style.display = "flex";
+
+  try {
+    console.log("LOG: Starting interview process...");
+    statusText.innerText = "Initializing session with server...";
+
+    initializeUserCamera();
+    startInterviewTimer(10);
+
+    const response = await fetch("/api/interview/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName, email, booking_code }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to start interview session.");
+    }
+    
+    const data: SessionData = await response.json();
+    sessionId = data.sessionId;
+    console.log(`LOG: Session ID received: ${sessionId}`);
+
+    connectToBackendControlSocket();
+
+    // Uncomment to activate avatar and transcription
+    // await initializeHeyGenAvatar();
+    // await startGladiaConnection();
+
+    statusText.innerText = "Waiting for first question...";
+    console.log("LOG: Initial setup complete. Waiting for first question from backend.");
+  } catch (error) {
+    console.error("Error starting interview:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    statusText.innerText = `Error: ${errorMessage}`;
+    updateAvatarStatus("disconnected", "Connection Failed");
+  }
+}
+
+function endInterview(): void {
+  console.log("LOG: Ending the interview.");
+  if (interviewTimer) clearInterval(interviewTimer);
+  stopGladiaConnection();
+  closeHeyGenSession();
+  chatContainer.style.display = "none";
+  endScreen.style.display = "block";
+}
+
+// --- 7. FASTAPI BACKEND COMMUNICATION ---
+function connectToBackendControlSocket(): void {
+  statusText.innerText = "Connecting to interview server...";
+  const controlWsUrl = "ws://" + window.location.host + "/ws/interview/" + sessionId + "/";
+  controlSocket = new WebSocket(controlWsUrl);
+
+  controlSocket.onopen = () => {
+    console.log("LOG: Control Socket to FastAPI backend connected.");
+    showAiLoadingBubble();
+  };
+
+  controlSocket.onmessage = async (event: MessageEvent) => await onBackendMessage(event);
+  
+  controlSocket.onclose = () => {
+    console.log("LOG: Control Socket to FastAPI backend closed.");
+  };
+
+  controlSocket.onerror = (err: Event) => {
+    console.error("Control Socket error:", err);
+    statusText.innerText = "Connection error. Please refresh.";
+  };
+}
+
+async function onBackendMessage(event: MessageEvent): Promise<void> {
+  const command: BackendCommand = JSON.parse(event.data);
+  console.log("LOG: Received command from backend:", command);
+
+  removeLoadingBubble("ai-loading-bubble");
+
+  if (command.type === "new_question" && command.payload.text) {
+    addMessageToChat(command.payload.text, "ai");
+
+    isUserTurn = false;
+    statusText.innerText = "AI is speaking...";
+    console.log("LOG: Mic gate closed (isUserTurn=false). Avatar is speaking.");
+
+    await sendTextToAvatar(command.payload.text, "repeat");
+
+    const speechDuration: number = estimateSpeechDuration(command.payload.text);
+    const buffer: number = 1500;
+    console.log(
+      `LOG: Estimated speech time: ${speechDuration}ms. Mic will open in ${
+        speechDuration + buffer
+      }ms.`
+    );
+
+    await sleep(speechDuration + buffer);
+
+    console.log("LOG: Timer finished. Opening mic gate (isUserTurn=true).");
+    statusText.innerText = "Your turn to speak.";
+    isUserTurn = true;
+  }
+
+  if (command.type === "end_interview") {
+    console.log("LOG: Received end_interview command.");
+    endInterview();
+  }
+}
+
+function submitTranscript(finalTranscript: string): void {
+  statusText.innerText = "AI is thinking...";
+  showAiLoadingBubble();
+  console.log("LOG: Submitting answer to backend:", finalTranscript);
+
+  if (controlSocket && controlSocket.readyState === WebSocket.OPEN) {
+    controlSocket.send(
+      JSON.stringify({
+        type: "user_answer",
+        payload: { answer: finalTranscript },
+      })
+    );
+  } else {
+    console.error("Cannot submit transcript, control socket is not open.");
+    statusText.innerText = "Connection error. Please refresh.";
+  }
+  isUserTurn = false;
+  console.log("LOG: Mic gate closed (isUserTurn=false). Waiting for next question.");
+}
+
+// --- 8. HEYGEN AVATAR INTEGRATION ---
+function updateAvatarStatus(status: string, message: string): void {
+  avatarStatus.className = `avatar-status ${status}`;
+  avatarStatus.textContent = message;
+}
+
+async function getHeyGenSessionToken(): Promise<void> {
+  const response = await fetch(`/api/heygen/create_token`, { method: "POST" });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Failed to get HeyGen token: ${errorData.message || response.statusText}`);
+  }
+  const data: HeyGenInitResponse = await response.json();
+  heygenSessionToken = data.data.token;
+  console.log("LOG: HeyGen session token obtained via proxy");
+}
+
+async function createHeyGenSession(): Promise<void> {
+  if (!heygenSessionToken) {
+    await getHeyGenSessionToken();
+  }
+  
+  const response = await fetch(`/api/heygen/new_session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: heygenSessionToken }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Failed to create HeyGen session: ${errorData.message || response.statusText}`);
+  }
+  
+  const data: HeyGenSessionResponse = await response.json();
+  if (!data.data || !data.data.url) {
+    throw new Error("HeyGen session data is invalid.");
+  }
+  heygenSessionInfo = data.data;
+
+  heygenRoom = new window.LivekitClient.Room({ adaptiveStream: true, dynacast: true });
+  heygenMediaStream = new MediaStream();
+
+  heygenRoom.on(window.LivekitClient.RoomEvent.TrackSubscribed, (track: any) => {
+    if (track.kind === "video" || track.kind === "audio") {
+      heygenMediaStream?.addTrack(track.mediaStreamTrack);
+      if (heygenMediaStream && heygenMediaStream.getVideoTracks().length > 0) {
+        avatarVideo.srcObject = heygenMediaStream;
+        avatarVideo.style.display = "block";
+        avatarPlaceholder.style.display = "none";
+        updateAvatarStatus("connected", "Avatar Ready");
+        console.log("HeyGen avatar media stream ready");
+        isAvatarReady = true;
+        avatarVideo.play().catch((e) => console.error("Avatar video play failed:", e));
+      }
+    }
+  });
+
+  heygenRoom.on(window.LivekitClient.RoomEvent.Disconnected, (reason: string) => {
+    console.log(`HeyGen room disconnected: ${reason}`);
+    updateAvatarStatus("disconnected", "Avatar Disconnected");
+  });
+
+  await heygenRoom.prepareConnection(heygenSessionInfo.url, heygenSessionInfo.access_token);
+  console.log("LOG: HeyGen session created successfully via proxy");
+}
+
+async function startHeyGenStreamingSession(): Promise<void> {
+  if (!heygenSessionInfo) {
+    throw new Error("HeyGen session info is not available");
+  }
+
+  await fetch(`/api/heygen/start_session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      token: heygenSessionToken,
+      session_id: heygenSessionInfo.session_id,
+    }),
+  });
+  
+  await heygenRoom.connect(heygenSessionInfo.url, heygenSessionInfo.access_token);
+  console.log("LOG: HeyGen streaming started successfully via proxy");
+}
+
+async function sendTextToAvatar(text: string, taskType: string = "talk"): Promise<void> {
+  let waitTimeout: number = 40;
+  while (!isAvatarReady && waitTimeout > 0) {
+    console.log("Avatar not ready, waiting...");
+    await sleep(500);
+    waitTimeout--;
+  }
+
+  if (!isAvatarReady) {
+    console.error("Avatar connection timed out. Could not send text.");
+    const speechDuration: number = estimateSpeechDuration(text);
+    const buffer: number = 1500;
+    await sleep(speechDuration + buffer);
+    statusText.innerText = "Your turn to speak.";
+    isUserTurn = true;
+    return;
+  }
+
+  if (!heygenSessionInfo) {
+    console.log("No active HeyGen session, skipping avatar.");
+    return;
+  }
+
+  try {
+    console.log(`LOG: Sending task '${taskType}' to proxy with text: "${text}"`);
+    const response = await fetch("/api/heygen/task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: heygenSessionInfo.session_id,
+        text: text,
+        task_type: taskType,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error(`Error sending task via proxy: ${errorData.message || response.statusText}`);
+    }
+  } catch (error) {
+    console.error("Error sending text to avatar via proxy:", error);
+  }
+}
+
+async function closeHeyGenSession(): Promise<void> {
+  if (!heygenSessionInfo) {
+    return;
+  }
+  
+  try {
+    await fetch(`/api/heygen/stop_session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        token: heygenSessionToken,
+        session_id: heygenSessionInfo.session_id,
+      }),
+    });
+    
+    if (heygenRoom) {
+      await heygenRoom.disconnect();
+    }
+    
+    avatarVideo.srcObject = null;
+    avatarVideo.style.display = "none";
+    avatarPlaceholder.style.display = "block";
+    heygenSessionInfo = null;
+    heygenRoom = null;
+    heygenMediaStream = null;
+    heygenSessionToken = null;
+    updateAvatarStatus("disconnected", "Avatar Closed");
+    console.log("LOG: HeyGen session closed via proxy");
+  } catch (error) {
+    console.error("Error closing HeyGen session:", error);
+  }
+}
+
+async function initializeHeyGenAvatar(): Promise<void> {
+  try {
+    updateAvatarStatus("connecting", "Initializing Avatar...");
+    await createHeyGenSession();
+    await startHeyGenStreamingSession();
+    updateAvatarStatus("connected", "Avatar Connected");
+  } catch (error) {
+    console.error("Error initializing HeyGen avatar:", error);
+    updateAvatarStatus("disconnected", "Avatar Failed");
+    throw error;
+  }
+}
+
+// --- 9. GLADIA TRANSCRIPTION LOGIC ---
+async function startGladiaConnection(): Promise<void> {
+  try {
+    audioProcessor.stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: false,
+    });
+
+    const gladiaConfig: GladiaConfig = {
+      encoding: "wav/pcm",
+      sample_rate: 16000,
+      model: "solaria-1",
+      endpointing: 2,
+      language_config: {
+        languages: ["en", "id"],
+        code_switching: false,
+      },
+      maximum_duration_without_endpointing: 60,
+    };
+
+    const initResponse = await fetch("/api/gladia/init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(gladiaConfig),
+    });
+
+    if (!initResponse.ok) throw new Error("Gladia API initialization via proxy failed.");
+    const initData = await initResponse.json();
+
+    gladiaSocket = new WebSocket(initData.url);
+    gladiaSocket.onopen = () => processMicrophoneAudio();
+    gladiaSocket.onmessage = onGladiaMessage;
+    gladiaSocket.onclose = (event: CloseEvent) => {
+      console.log("LOG: Persistent Gladia socket closed.");
+    };
+    gladiaSocket.onerror = (err: Event) => console.error("Gladia socket error:", err);
+  } catch (err) {
+    console.error("Gladia connection error:", err);
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    statusText.innerText = `Error: ${errorMessage}`;
+    throw err;
+  }
+}
+
+function onGladiaMessage(event: MessageEvent): void {
+  const data: GladiaMessage = JSON.parse(event.data);
+  console.log("GLADIA MESSAGE RECEIVED:", data);
+
+  if (data.type === "speech_start" && isUserTurn) {
+    showUserLoadingBubble();
+  }
+
+  if (data.type === "transcript" && data.data && data.data.is_final) {
+    if (isUserTurn) {
+      finalizeAndProceed(data.data.utterance.text);
+    }
+  }
+}
+
+function finalizeAndProceed(finalText: string): void {
+  isUserTurn = false;
+  removeLoadingBubble("user-loading-bubble");
+
+  if (finalText && finalText.trim().length > 0) {
+    addMessageToChat(finalText, "user");
+    submitTranscript(finalText);
+  }
+}
+
+function stopGladiaConnection(): void {
+  console.log("LOG: Stopping Gladia connection...");
+  if (gladiaSocket && gladiaSocket.readyState === WebSocket.OPEN) {
+    gladiaSocket.send(JSON.stringify({ type: "stop_recording" }));
+    gladiaSocket.close();
+  }
+  
+  if (audioProcessor.stream) {
+    audioProcessor.stream.getTracks().forEach((track) => track.stop());
+    audioProcessor.stream = null;
+  }
+  
+  if (audioProcessor.processor) audioProcessor.processor.disconnect();
+  if (audioProcessor.context && audioProcessor.context.state !== "closed") {
+    audioProcessor.context.close();
+  }
+}
+
+function processMicrophoneAudio(): void {
+  const sampleRate: number = 16000;
+  audioProcessor.context = new (window.AudioContext || window.webkitAudioContext)({ sampleRate });
+  
+  if (!audioProcessor.stream || !audioProcessor.context) {
+    console.error("Audio stream or context not available");
+    return;
+  }
+
+  const source = audioProcessor.context.createMediaStreamSource(audioProcessor.stream);
+  const bufferSize: number = 4096;
+  audioProcessor.processor = audioProcessor.context.createScriptProcessor(bufferSize, 1, 1);
+
+  audioProcessor.processor.onaudioprocess = (e: AudioProcessingEvent) => {
+    if (isUserTurn) {
+      const inputData: Float32Array = e.inputBuffer.getChannelData(0);
+      const pcmData = new Int16Array(inputData.length);
+      for (let i = 0; i < inputData.length; i++) {
+        pcmData[i] = inputData[i] * 0x7fff;
+      }
+      const base64Data: string = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(pcmData.buffer))));
+
+      if (gladiaSocket && gladiaSocket.readyState === WebSocket.OPEN) {
+        gladiaSocket.send(JSON.stringify({ type: "audio_chunk", data: { chunk: base64Data } }));
+      }
+    } else {
+      const silentChunk = new Int16Array(bufferSize);
+      const base64Data: string = btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(silentChunk.buffer))));
+      if (gladiaSocket && gladiaSocket.readyState === WebSocket.OPEN) {
+        gladiaSocket.send(JSON.stringify({ type: "audio_chunk", data: { chunk: base64Data } }));
+      }
+    }
+  };
+  
+  source.connect(audioProcessor.processor);
+  audioProcessor.processor.connect(audioProcessor.context.destination);
+}
+
+// --- 10. INITIALIZATION ---
+document.addEventListener("DOMContentLoaded", init);

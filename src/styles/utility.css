@@ -1,0 +1,91 @@
+@utility glassmorphism {
+  position: relative;
+  overflow: hidden;
+  @apply shadow;
+
+  &:before {
+    content: " ";
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    filter: url(#glass-distortion);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  &:after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    background-color: oklch(1 0 0 / 0.25);
+  }
+}
+
+@utility strip {
+  position: relative;
+  
+  &:after {
+    content: "";
+    position: absolute;
+    height: 1px;
+    width: 100%;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--border) 25%,
+      var(--border) 75%,
+      transparent 100%
+    );
+  }
+}
+
+@utility border-grid {
+  @apply border-border/50 dark:border-border;
+}
+
+@utility theme-container {
+  @apply font-sans;
+}
+
+@utility container {
+  @apply 3xl:max-w-screen-2xl mx-auto max-w-[1400px];
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility border-ghost {
+  @apply after:border-border relative after:absolute after:inset-0 after:border after:mix-blend-darken dark:after:mix-blend-lighten;
+}
+
+@utility step-wrapper {
+  counter-reset: step;
+}
+
+@utility step {
+  position: relative;
+  counter-increment: step;
+
+  &:before {
+    @apply text-muted-foreground bg-muted top-0 left-0 z-10 hidden size-7 items-center justify-center p-2 font-mono text-sm font-medium md:absolute md:flex;
+    content: counter(step);
+  }
+}
+
+@utility extend-touch-target {
+  @media (pointer: coarse) {
+    @apply relative touch-manipulation after:absolute after:-inset-2;
+  }
+}
