@@ -12,6 +12,13 @@ RUN npm install
 # Copy the rest of the source code
 COPY . .
 
+# --- ADD THIS NEW BLOCK ---
+# Create the .env file with the required public variables for the build
+RUN echo "NEXT_PUBLIC_SITE_NAME=AI Interview" >> .env && \
+    echo "NEXT_PUBLIC_SITE_DESC=AI Interview from G-Brain" >> .env && \
+    echo "NEXT_PUBLIC_SITE_URL=https://dota-duta.netrikastag.dedyn.io" >> .env
+# --------------------------
+
 # Run the Next.js build command
 RUN npm run build
 
@@ -33,9 +40,6 @@ RUN npm ci --omit=dev
 # Copy the built application from the 'builder' stage
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-
-# Copy the Next.js configuration file if it exists
-# Add other files like next.config.mjs if needed
 COPY --from=builder /app/next.config.js ./
 
 # Expose the port that Next.js runs on by default
