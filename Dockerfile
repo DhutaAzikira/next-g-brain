@@ -1,6 +1,6 @@
 # === Stage 1: Build the Application ===
 # Use a Node.js image to install dependencies and build the app
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -25,7 +25,7 @@ RUN npm run build
 
 # === Stage 2: Production Image ===
 # Start from a fresh, minimal Node.js image
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 # Set the working directory
 WORKDIR /app
