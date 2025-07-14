@@ -1,30 +1,31 @@
 # === Stage 1: Build the Application ===
-# Use a Node.js image to install dependencies and build the app
+# Use the Debian-based slim image for better compatibility
 FROM node:20-slim AS builder
 
 # Set the working directory
 WORKDIR /app
 
-# Copy package files and install all dependencies (including devDependencies)
+# Copy package files
 COPY package*.json ./
-RUN npm install
+
+# Install build tools and then npm dependencies
+RUN apk add --no-cache build-essential python3 && \
+    npm install
 
 # Copy the rest of the source code
 COPY . .
 
-# --- ADD THIS NEW BLOCK ---
 # Create the .env file with the required public variables for the build
 RUN echo "NEXT_PUBLIC_SITE_NAME=AI Interview" >> .env && \
     echo "NEXT_PUBLIC_SITE_DESC=AI Interview from G-Brain" >> .env && \
-    echo "NEXT_PUBLIC_SITE_URL=https://dota-duta.netrikastag.dedyn.io" >> .env
-# --------------------------
+    echo "NEXT_PUBLIC_SITE_URL=https://my-friends-app.netrikastag.dedyn.io" >> .env
 
 # Run the Next.js build command
 RUN npm run build
 
 
 # === Stage 2: Production Image ===
-# Start from a fresh, minimal Node.js image
+# Start from the same fresh, slim image
 FROM node:20-slim AS runner
 
 # Set the working directory
