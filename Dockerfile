@@ -1,50 +1,56 @@
-# === Stage 1: Build the Application ===
-# Use the Debian-based slim image for better compatibility
-FROM node:20-slim AS builder
-
-# Set the working directory
+# 1. Install dependencies only when needed
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Install dependencies based on the preferred package manager
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
 
-# Install build tools and then npm dependencies
-RUN apk add --no-cache build-essential python3 && \
-    npm install
-
-# Copy the rest of the source code
+# 2. Rebuild the source code only when needed
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Create the .env file with the required public variables for the build
-RUN echo "NEXT_PUBLIC_SITE_NAME=AI Interview" >> .env && \
-    echo "NEXT_PUBLIC_SITE_DESC=AI Interview from G-Brain" >> .env && \
-    echo "NEXT_PUBLIC_SITE_URL=https://my-friends-app.netrikastag.dedyn.io" >> .env
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line in case you want to disable telemetry during the build.
+# ENV NEXT_TELEMETRY_DISABLED 1
 
-# Run the Next.js build command
 RUN npm run build
 
-
-# === Stage 2: Production Image ===
-# Start from the same fresh, slim image
-FROM node:20-slim AS runner
-
-# Set the working directory
+# 3. Production image, copy all the files and run next
+FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Set the environment to production for performance optimizations
 ENV NODE_ENV=production
+# Uncomment the following line in case you want to disable telemetry during runtime.
+# ENV NEXT_TELEMETRY_DISABLED 1
 
-# Copy package files and install ONLY production dependencies
-COPY package*.json ./
-RUN npm ci --omit=dev
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copy the built application from the 'builder' stage
-COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./
 
-# Expose the port that Next.js runs on by default
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
 EXPOSE 3000
 
-# The command to start the optimized Next.js server
-CMD ["npm", "start"]
+ENV PORT=3000
+
+CMD ["node", "server.js"]
