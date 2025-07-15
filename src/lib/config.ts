@@ -9,9 +9,9 @@
 export const envConfig = process.env;
 
 export const siteConfig = {
-  name: envConfig.NEXT_PUBLIC_SITE_NAME || "nonempty",
-  description: envConfig.NEXT_PUBLIC_SITE_DESC || "nonempty",
-  url: envConfig.NEXT_PUBLIC_SITE_URL || "nonempty",
+  name: envConfig.NEXT_PUBLIC_SITE_NAME || "AI Interview",
+  description: envConfig.NEXT_PUBLIC_SITE_DESC || "AI Interview from G-Brain",
+  url: envConfig.NEXT_PUBLIC_SITE_URL || "https://dota-duta.netrikastag.dedyn.io",
   links: {
     instagram: "https://www.instagram.com/",
     linkedin: "https://www.linkedin.com/",
