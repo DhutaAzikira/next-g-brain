@@ -1,9 +1,7 @@
 # Stage 1: Base image with build tools
-# Using node:18-slim which is Debian-based and compatible with glibc.
 FROM node:18-slim AS base
 WORKDIR /app
 # Install build-essential and the correct python package for Debian
-# python-is-python3 creates the necessary symlinks.
 RUN apt-get update && apt-get install -y build-essential python-is-python3
 
 # Stage 2: Install dependencies

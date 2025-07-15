@@ -48,11 +48,16 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Add these lines */}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+        {/* START: ADD THESE LINES */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-sans/variable.css" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-mono/variable.css" />
-        {/* End of added lines */}
+        {/* END: ADD THESE LINES */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -69,9 +74,10 @@ export default async function RootLayout({
         />
         <meta name="theme-color" content="#ffffff" />
       </head>
+      {/* REMOVE fontVariables FROM HERE */}
       <body
         className={cn(
-          "text-foreground group/body font-inter overscroll-none antialiased",
+          "text-foreground group/body font-inter overscroll-none antialiased"
         )}
       >
         <ThemeProvider
