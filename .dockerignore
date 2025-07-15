@@ -1,21 +1,7 @@
-# Folder dan file yang tidak perlu dibawa ke dalam image
-node_modules
-.next
-out
-build
-dist
-bun.lock
-*.log
-
-# File sistem dan build
-.dockerignore
 Dockerfile
-docker-compose.yml
-
-# VCS dan config dev
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
 .git
-.gitignore
-.env
-.env.development
-*.swp
-*.swo

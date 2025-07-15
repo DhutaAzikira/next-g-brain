@@ -33,11 +33,11 @@ export async function LoginForm() {
         </Button>
       </div> */}
 
-      <div className="strip relative mb-6 w-full text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center">
+      {/* <div className="strip relative mb-6 w-full text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center">
         <div className="bg-card text-muted-foreground relative z-10 mx-auto w-fit px-2 text-xs font-medium transition-colors duration-500">
           Atau masuk dengan.
         </div>
-      </div>
+      </div> */}
 
       {/* Login Form Action */}
       <LoginFormAction />

@@ -1,12 +1,12 @@
-import { z } from "zod";
+// import { z } from "zod";
 
-const envConfigSchema = z.object({
-  NEXT_PUBLIC_SITE_NAME: z.string().nonempty(),
-  NEXT_PUBLIC_SITE_DESC: z.string().nonempty(),
-  NEXT_PUBLIC_SITE_URL: z.string().nonempty(),
-});
+// const envConfigSchema = z.object({
+//   NEXT_PUBLIC_SITE_NAME: z.string().nonempty(),
+//   NEXT_PUBLIC_SITE_DESC: z.string().nonempty(),
+//   NEXT_PUBLIC_SITE_URL: z.string().nonempty(),
+// });
 
-export const envConfig = envConfigSchema.parse(process.env);
+export const envConfig = process.env;
 
 export const siteConfig = {
   name: envConfig.NEXT_PUBLIC_SITE_NAME || "nonempty",
