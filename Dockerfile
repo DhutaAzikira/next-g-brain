@@ -33,6 +33,18 @@ ENV AUTH_GOOGLE_ID=$AUTH_GOOGLE_ID
 ENV AUTH_GOOGLE_SECRET=$AUTH_GOOGLE_SECRET
 ENV AUTH_SECRET=$AUTH_SECRET
 
+RUN echo $NEXT_PUBLIC_SITE_NAME
+RUN echo $NEXT_PUBLIC_SITE_DESC
+RUN echo $NEXT_PUBLIC_SITE_URL
+RUN echo $NEXT_PUBLIC_API_URL
+RUN echo $NEXT_PUBLIC_WS_API_URL
+RUN echo $NEXT_PUBLIC_WS_HOST
+RUN echo $NEXT_PUBLIC_SUPABASE_URL
+RUN echo $NEXT_PUBLIC_SUPABASE_ANON_KEY
+RUN echo $AUTH_GOOGLE_ID
+RUN echo $AUTH_GOOGLE_SECRET
+RUN echo $AUTH_SECRET
+
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN \
@@ -89,20 +101,5 @@ ENV PORT=3001
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
 ENV HOSTNAME="0.0.0.0"
-CMD sh -c "\
-  echo '🔐 RUNTIME ENV:' && \
-  echo NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME && \
-  echo NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL && \
-  echo NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL && \
-  echo NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL && \
-  echo AUTH_GOOGLE_ID=$AUTH_GOOGLE_ID && \
-  echo AUTH_GOOGLE_SECRET=$AUTH_GOOGLE_SECRET && \
-  echo AUTH_SECRET=$AUTH_SECRET && \
-  echo NEXT_PUBLIC_WS_API_URL=$NEXT_PUBLIC_WS_API_URL && \
-  echo NEXT_PUBLIC_WS_HOST=$NEXT_PUBLIC_WS_HOST && \
-  echo NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL && \
-  echo NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY && \
-  echo '---' && \
-  node server.js"
 
-# CMD ["node", "server.js"]
+CMD ["node", "server.js"]
