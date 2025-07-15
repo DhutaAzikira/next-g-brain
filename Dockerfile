@@ -1,5 +1,5 @@
 # 1. Install dependencies only when needed
-FROM node:18 AS deps
+FROM node:18-slim AS deps
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
@@ -12,7 +12,7 @@ RUN \
   fi
 
 # 2. Rebuild the source code only when needed
-FROM node:18 AS builder
+FROM node:18-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -25,7 +25,7 @@ COPY . .
 RUN npm run build
 
 # 3. Production image, copy all the files and run next
-FROM node:18 AS runner
+FROM node:18-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
