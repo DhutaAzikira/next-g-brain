@@ -81,9 +81,24 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 3000
+EXPOSE 3001
 
-ENV PORT=3000
+CMD sh -c "\
+  echo '🔐 RUNTIME ENV:' && \
+  echo NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME && \
+  echo NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL && \
+  echo NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL && \
+  echo NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL && \
+  echo AUTH_GOOGLE_ID=$AUTH_GOOGLE_ID && \
+  echo AUTH_GOOGLE_SECRET=$AUTH_GOOGLE_SECRET && \
+  echo AUTH_SECRET=$AUTH_SECRET && \
+  echo NEXT_PUBLIC_WS_API_URL=$NEXT_PUBLIC_WS_API_URL && \
+  echo NEXT_PUBLIC_WS_HOST=$NEXT_PUBLIC_WS_HOST && \
+  echo NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL && \
+  echo NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY && \
+  echo '---'"
+
+ENV PORT=3001
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
