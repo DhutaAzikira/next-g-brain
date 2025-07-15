@@ -1,5 +1,5 @@
 # Stage 1: Base image with necessary build tools
-FROM node:22 AS base
+FROM node:18 AS base
 WORKDIR /app
 # Install essential build tools for native modules
 RUN apt-get update && apt-get install -y build-essential python
@@ -34,7 +34,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build
 
 # Stage 4: Create the final production image
-FROM node:22-slim AS runner
+FROM node:18-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
