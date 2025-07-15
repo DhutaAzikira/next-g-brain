@@ -1,34 +1,40 @@
-# 1. Base stage for a clean build environment
-FROM node:18 AS base
+# Stage 1: Base image with necessary build tools
+FROM node:22 AS base
 WORKDIR /app
+# Install essential build tools for native modules
+RUN apt-get update && apt-get install -y build-essential python
 
-# 2. Install dependencies in a dedicated stage to ensure a clean environment
+# Stage 2: Install dependencies in a clean environment
 FROM base AS deps
+# Copy only the package files
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
-# Clean npm cache to ensure a fresh install
-RUN npm cache clean --force
-
-# Install dependencies using the appropriate package manager
-RUN \
+# Clean the npm cache and install dependencies
+RUN npm cache clean --force && \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
   elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-# 3. Build the application
+# Stage 3: Build the application
 FROM base AS builder
+# Copy dependencies from the 'deps' stage
 COPY --from=deps /app/node_modules ./node_modules
+# Copy the rest of the application source code
 COPY . .
 
-# Disable Next.js telemetry during the build
+# Ensure the correct native modules are built
+RUN npm rebuild
+
+# Disable Next.js telemetry
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Run the build
 RUN npm run build
 
-# 4. Production image, copy only the necessary files for a smaller final image
-FROM base AS runner
+# Stage 4: Create the final production image
+FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -37,14 +43,14 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy the public folder
+# Copy the public folder from the builder stage
 COPY --from=builder /app/public ./public
 
-# Set the correct permissions for the .next folder
+# Set correct permissions for the .next folder
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy the standalone output from the builder stage
+# Copy the standalone Next.js server output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
