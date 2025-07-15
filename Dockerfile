@@ -1,6 +1,5 @@
 # 1. Install dependencies only when needed
-FROM node:18-alpine AS deps
-RUN apk add --no-cache libc6-compat
+FROM node:18 AS deps
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
@@ -13,7 +12,7 @@ RUN \
   fi
 
 # 2. Rebuild the source code only when needed
-FROM node:18-alpine AS builder
+FROM node:18 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -26,7 +25,7 @@ COPY . .
 RUN npm run build
 
 # 3. Production image, copy all the files and run next
-FROM node:18-alpine AS runner
+FROM node:18 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
