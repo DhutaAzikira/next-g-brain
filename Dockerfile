@@ -83,6 +83,12 @@ USER nextjs
 
 EXPOSE 3001
 
+
+ENV PORT=3001
+
+# server.js is created by next build from the standalone output
+# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
+ENV HOSTNAME="0.0.0.0"
 CMD sh -c "\
   echo '🔐 RUNTIME ENV:' && \
   echo NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME && \
@@ -96,11 +102,7 @@ CMD sh -c "\
   echo NEXT_PUBLIC_WS_HOST=$NEXT_PUBLIC_WS_HOST && \
   echo NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL && \
   echo NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY && \
-  echo '---'"
+  echo '---' && \
+  node server.js"
 
-ENV PORT=3001
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
-ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+# CMD ["node", "server.js"]
