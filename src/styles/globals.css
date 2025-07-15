@@ -71,11 +71,11 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: 'Geist Sans', sans-serif; /* Use Geist Sans as the default */
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
   }
-
   @supports (font: -apple-system-body) and (-webkit-appearance: none) {
     [data-wrapper] {
       @apply min-[1800px]:border-t;

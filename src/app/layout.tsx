@@ -6,7 +6,6 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import "@/styles/globals.css";
 
 import { siteConfig } from "@/lib/config";
-import { fontVariables } from "@/lib/fonts";
 import { cn } from "@/utils/cn";
 import { Toaster } from "sonner";
 import { SessionProvider } from "next-auth/react";
@@ -49,6 +48,11 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Add these lines */}
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-sans/variable.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-mono/variable.css" />
+        {/* End of added lines */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -67,7 +71,6 @@ export default async function RootLayout({
       </head>
       <body
         className={cn(
-          fontVariables,
           "text-foreground group/body font-inter overscroll-none antialiased",
         )}
       >
