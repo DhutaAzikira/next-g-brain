@@ -1,8 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // standalone
   output: "standalone",
+  reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME,
+    NEXT_PUBLIC_SITE_DESC: process.env.NEXT_PUBLIC_SITE_DESC,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_WS_API_URL: process.env.NEXT_PUBLIC_WS_API_URL,
+    NEXT_PUBLIC_WS_HOST: process.env.NEXT_PUBLIC_WS_HOST,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
+    AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
+    AUTH_SECRET: process.env.AUTH_SECRET,
+  },
   images: {
     remotePatterns: [
       {
