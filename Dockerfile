@@ -1,15 +1,14 @@
-# Stage 1: Base image with necessary build tools
-FROM node:18 AS base
+# Stage 1: Base image with build tools
+# Using node:18-slim which is Debian-based and compatible with glibc.
+FROM node:18-slim AS base
 WORKDIR /app
-# Install essential build tools for native modules
-RUN apt-get update && apt-get install -y build-essential python
+# Install build-essential and the correct python package for Debian
+# python-is-python3 creates the necessary symlinks.
+RUN apt-get update && apt-get install -y build-essential python-is-python3
 
-# Stage 2: Install dependencies in a clean environment
+# Stage 2: Install dependencies
 FROM base AS deps
-# Copy only the package files
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-
-# Clean the npm cache and install dependencies
 RUN npm cache clean --force && \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
@@ -19,46 +18,29 @@ RUN npm cache clean --force && \
 
 # Stage 3: Build the application
 FROM base AS builder
-# Copy dependencies from the 'deps' stage
 COPY --from=deps /app/node_modules ./node_modules
-# Copy the rest of the application source code
 COPY . .
-
-# Ensure the correct native modules are built
+# Rebuild any native dependencies to be safe
 RUN npm rebuild
-
-# Disable Next.js telemetry
 ENV NEXT_TELEMETRY_DISABLED 1
-
-# Run the build
 RUN npm run build
 
-# Stage 4: Create the final production image
+# Stage 4: Production image
 FROM node:18-slim AS runner
 WORKDIR /app
-
 ENV NODE_ENV=production
 
-# Create a non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy the public folder from the builder stage
 COPY --from=builder /app/public ./public
-
-# Set correct permissions for the .next folder
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy the standalone Next.js server output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Switch to the non-root user
 USER nextjs
-
 EXPOSE 3000
 ENV PORT=3000
-
-# Start the application
 CMD ["node", "server.js"]
