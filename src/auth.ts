@@ -4,7 +4,7 @@ import { googleSession } from "./modules/auth/services/login.service";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },
   callbacks: {

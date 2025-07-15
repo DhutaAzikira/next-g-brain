@@ -1,6 +1,6 @@
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import { CredentialsSignin, type NextAuthConfig, type DefaultSession, type User } from "next-auth";
+import { type NextAuthConfig, type DefaultSession, type User } from "next-auth";
 
 import { tryCatch } from "@/utils/try-catch";
 import { getLoginCredentials } from "@/modules/auth/services/login.service";
@@ -31,32 +31,19 @@ declare module "next-auth" {
   }
 }
 
-class InvalidLoginError extends CredentialsSignin {
-  code = "Invalid identifier or password";
-}
-
 export default {
   providers: [
     Google,
     Credentials({
       credentials: {
-        username: {
-          label: "Username",
-          type: "text",
-        },
-        password: {
-          label: "Password",
-          type: "password",
-        },
-        remember: {
-          label: "Remember me",
-          type: "checkbox",
-        },
+        username: {},
+        password: {},
+        remember: {},
       },
       async authorize(credentials) {
         let user = null;
 
-        const [res, err] = await tryCatch(
+        const [res] = await tryCatch(
           getLoginCredentials({
             username: (credentials?.username as string) ?? "",
             password: (credentials?.password as string) ?? "",
@@ -64,14 +51,10 @@ export default {
           }),
         );
 
-        if (err) {
-          throw new InvalidLoginError("Invalid username or password");
-        }
-
         user = res;
 
         if (!user) {
-          throw new InvalidLoginError("Unexpected Error");
+          throw new Error("No User Found");
         }
 
         const trimUser: User = {
