@@ -6,7 +6,7 @@ export function HomeHeroView() {
   return (
     <section
       id="hero"
-      className="col-span-full flex w-full items-center justify-center bg-gradient-to-br from-[#F5F3FF] to-[#FDF2F8] pt-30 pb-50 font-sans dark:bg-purple-800 dark:from-purple-600 dark:to-gray-900"
+      className="col-span-full flex w-full items-center px-4 justify-center bg-gradient-to-br from-[#F5F3FF] to-[#FDF2F8] pt-30 pb-50 font-sans dark:bg-purple-800 dark:from-purple-600 dark:to-gray-900"
       aria-label="Latihan Interview Kerja Bareng AI"
       lang="id"
     >

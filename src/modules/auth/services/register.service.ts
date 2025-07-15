@@ -13,7 +13,6 @@ import {
 } from "../schemas/register.schema";
 import { handleActionError } from "@/lib/handler-action-error";
 import { flattenError } from "@/lib/zod";
-import { tryCatch } from "@/utils/try-catch";
 import { apiServer } from "@/lib/api-server";
 import { supabase } from "@/utils/supabase/client";
 import { IRegisterResponse } from "@/types/response.type";
@@ -42,29 +41,32 @@ export async function register(
         inputs: payload,
       };
 
-    const [res, err] = await tryCatch(
-      apiServer({
-        method: "POST",
-        url: "/api/register/",
-        body: JSON.stringify({
-          username: validateData.data.username,
-          email: validateData.data.email,
-          password: validateData.data.password,
-        }),
+    const res = await apiServer({
+      method: "POST",
+      url: "/api/register/",
+      body: JSON.stringify({
+        username: validateData.data.username,
+        email: validateData.data.email,
+        password: validateData.data.password,
       }),
-    );
+    });
 
-    if (err) {
-      console.log("error register", err);
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.log("JSON", data);
       return {
         success: false,
         message: "Gagal mendaftar",
-        errors: err.message,
+        errors: {
+          username: data.username,
+          email: data.email,
+        },
         inputs: payload,
       };
     }
 
-    const response = (await res.json()) as IRegisterResponse;
+    const response = data as IRegisterResponse;
 
     (await cookies()).set("register-token", response.token, { maxAge: 60 * 60 * 24 * 7 });
 
@@ -152,6 +154,18 @@ export async function registerProfile(
       headers: { Authorization: `Token ${token}` },
       body: JSON.stringify(body),
     });
+
+    const response = await res.json();
+
+    if (!res.ok) {
+      console.log("JSON", response);
+      return {
+        success: false,
+        message: "Gagal mendaftar",
+        errors: response,
+        inputs: payload,
+      };
+    }
 
     if (!res.ok && profile_picture) {
       await supabase().storage.from(bucket).remove([path]);

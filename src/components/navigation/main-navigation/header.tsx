@@ -8,7 +8,6 @@ import { cn } from "@/utils/cn";
 
 import { DesktopNav } from "./desktop-nav";
 import { buttonVariants } from "../../ui/button";
-import { ButtonTheme } from "../../shared/button-theme";
 import { auth } from "@/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -95,9 +94,6 @@ export async function MainHeaderNavigation() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-
-          {/* Theme */}
-          {isDesktop && <ButtonTheme />}
         </div>
       </div>
     </header>

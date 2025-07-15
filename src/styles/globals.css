@@ -6,7 +6,7 @@
 @import "./utility.css";
 @import "./variables.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(:root));
 
 @theme inline {
   --breakpoint-3xl: 1600px;

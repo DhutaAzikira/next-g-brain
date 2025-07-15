@@ -22,24 +22,19 @@ export function HomeJobView() {
   return (
     <section
       ref={ref}
-      className="flex items-center justify-center overflow-hidden bg-gray-50 font-sans dark:bg-gray-900"
+      className="flex items-center justify-center overflow-hidden bg-gray-50 px-4 font-sans dark:bg-gray-900"
     >
       <div className="container flex w-full flex-col items-center justify-center gap-6 px-6 py-24 md:grid md:grid-cols-2 md:gap-12 md:px-0 md:py-30">
         <div className="w-fit space-y-4">
-          <h2 className="clamp-[text,xl,3xl] font-bold">
-            AI Job Hunter Desktop
-          </h2>
+          <h2 className="clamp-[text,xl,3xl] font-bold">AI Job Hunter Desktop</h2>
           <p className="clamp-[text,sm,lg] mx-auto mb-6 max-w-[50ch] text-balance">
-            Aplikasi desktop AI yang otomatis mencari dan melamar pekerjaan
-            untukmu di LinkedIn, JobStreet, dan portal kerja lainnya.
+            Aplikasi desktop AI yang otomatis mencari dan melamar pekerjaan untukmu di LinkedIn,
+            JobStreet, dan portal kerja lainnya.
           </p>
 
           <ul className="grid grid-cols-1 gap-4 md:gap-6">
             {LIST.map((item, index) => (
-              <li
-                key={index}
-                className="flex items-center gap-2 text-sm leading-none"
-              >
+              <li key={index} className="flex items-center gap-2 text-sm leading-none">
                 <div className="rounded-full border border-green-200 bg-green-50 p-1 text-green-500">
                   <Check className="size-3" />
                 </div>
@@ -63,10 +58,7 @@ export function HomeJobView() {
                 className="absolute -bottom-4 -left-4"
               >
                 <div className="bg-card flex flex-col items-center justify-center gap-1 rounded-xl border px-6 py-3 shadow-xl">
-                  <Count
-                    count={2847}
-                    className="font-extrabold text-blue-500"
-                  />
+                  <Count count={2847} className="font-extrabold text-blue-500" />
 
                   <p className="text-muted-foreground text-xs">Jobs Applied</p>
                 </div>
@@ -89,10 +81,7 @@ export function HomeJobView() {
                 className="absolute -top-4 -right-4"
               >
                 <div className="bg-card flex flex-col items-center justify-center gap-1 rounded-xl border px-6 py-3 shadow-xl">
-                  <Count
-                    count={156}
-                    className="font-extrabold text-green-500"
-                  />
+                  <Count count={156} className="font-extrabold text-green-500" />
 
                   <p className="text-muted-foreground text-xs">Responses</p>
                 </div>

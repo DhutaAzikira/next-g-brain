@@ -6,7 +6,7 @@ export async function apiServer({ url, method, headers, body }: APIProps) {
   const token = cookiesStore.get("token")?.value || "";
   const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
 
-  const response = await fetch(baseUrl + url, {
+  return await fetch(baseUrl + url, {
     method: method ?? "GET",
     headers: {
       "Content-Type": "application/json",
@@ -16,11 +16,4 @@ export async function apiServer({ url, method, headers, body }: APIProps) {
     },
     body,
   });
-
-  if (!response.ok) {
-    console.log(response)
-    throw new Error(response.statusText);
-  }
-
-  return response;
 }

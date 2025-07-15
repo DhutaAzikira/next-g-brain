@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  reactStrictMode: true,
   env: {
     NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME,
     NEXT_PUBLIC_SITE_DESC: process.env.NEXT_PUBLIC_SITE_DESC,
@@ -43,6 +42,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
   serverRuntimeConfig: {
     maxHeaderSize: 32768, // 32KB instead of default 8KB
   },
@@ -61,6 +61,11 @@ const nextConfig: NextConfig = {
         loaders: ["@svgr/webpack"],
         as: "*.js",
       },
+    },
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
     },
   },
 };

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { GlassDisplacementFilter } from "@/components/shared/svg-filter";
-import { ThemeProvider } from "@/providers/theme-provider";
 
 import "@/styles/globals.css";
 
@@ -48,37 +47,13 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (localStorage.theme === 'dark' || ((!('theme' in localStorage) || localStorage.theme === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0a0a0a')
-                }
-                if (localStorage.layout) {
-                  document.documentElement.classList.add('layout-' + localStorage.layout)
-                }
-              } catch (_) {}
-            `,
-          }}
-        />
-        <meta name="theme-color" content="#ffffff" />
-      </head>
       <body
         className={cn(
           fontVariables,
           "text-foreground group/body font-inter overscroll-none antialiased",
         )}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SessionProvider session={session}>{children}</SessionProvider>
-        </ThemeProvider>
+        <SessionProvider session={session}>{children}</SessionProvider>
         <GlassDisplacementFilter />
         <Toaster />
       </body>

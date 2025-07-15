@@ -26,7 +26,7 @@ const FOOTER_LINKS = {
 
 export function MainFooterNavigation() {
   return (
-    <footer className="bg-slate-900 dark:bg-slate-900 text-white">
+    <footer className="bg-slate-900  text-white">
       <div className="container mx-auto px-6 py-12 md:px-0">
          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}

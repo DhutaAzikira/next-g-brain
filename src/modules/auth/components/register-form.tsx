@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   useEffect(() => {
     if (state.success && state.data) {
       onSuccess?.(state.data);
+    }
+
+    if (!state.success && state.message && typeof state.errors === "string") {
+      toast.error(state.message, { description: state.errors });
     }
   }, [onSuccess, state.data, state.success]);
 
