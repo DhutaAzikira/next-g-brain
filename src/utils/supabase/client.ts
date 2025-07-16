@@ -1,6 +1,23 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://xmzbujijabgznvosqrec.supabase.co";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-export const client = createClient(supabaseUrl, supabaseKey);
+let supabaseClient: SupabaseClient | null = null;
+
+export const client = (() => {
+  if (!supabaseClient) {
+    if (!supabaseKey && typeof window !== "undefined") {
+      throw new Error("supabaseKey is required.");
+    }
+    
+    // During build time, create a dummy client if key is missing
+    if (!supabaseKey) {
+      console.warn("Supabase key not found during build. Using placeholder.");
+      return createClient(supabaseUrl, "placeholder-key-for-build");
+    }
+    
+    supabaseClient = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabaseClient;
+})();
