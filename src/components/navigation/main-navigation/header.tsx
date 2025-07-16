@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { ButtonHome } from "@/components/shared/button-home";
 
@@ -9,7 +10,7 @@ import { cn } from "@/utils/cn";
 import { DesktopNav } from "./desktop-nav";
 import { buttonVariants } from "../../ui/button";
 import { auth } from "@/auth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/modules/auth/services/logout.service";
+import { getImageUrl } from "@/utils/image-url";
+import { Cog, LogOut, PanelLeftIcon } from "lucide-react";
 
 export async function MainHeaderNavigation() {
   const [{ isDesktop }, session] = await Promise.all([getDeviceInfo(), auth()]);
@@ -65,30 +68,51 @@ export async function MainHeaderNavigation() {
             </>
           ) : (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger>
                 <Avatar>
-                  <AvatarImage
-                    src={user?.image || ""}
-                    alt={user?.name || ""}
-                    className="shrink-0"
-                  />
+                  {user?.image && (
+                    <Image
+                      src={getImageUrl(user.image)}
+                      alt={user.name || ""}
+                      width={48}
+                      height={48}
+                    />
+                  )}
                   <AvatarFallback className="bg-gradient-purple text-white">
                     {user?.name?.charAt(0) || ""}
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent>
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard">Dashboard</Link>
+                  <Link
+                    href="/dashboard"
+                    className="text-muted-foreground hover:text-foreground flex items-center gap-2 md:gap-4"
+                  >
+                    <PanelLeftIcon className="size-4" />
+                    Dashboard
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/setting">Pengaturan</Link>
+                  <Link
+                    href="/dashboard/setting"
+                    className="text-muted-foreground hover:text-foreground flex items-center gap-2 md:gap-4"
+                  >
+                    <Cog className="size-4" />
+                    Pengaturan
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <form action={logout}>
-                    <button type="submit">Logout</button>
+                    <button
+                      type="submit"
+                      className="text-muted-foreground hover:text-foreground flex items-center gap-2 md:gap-4"
+                    >
+                      <LogOut className="size-4" />
+                      Logout
+                    </button>
                   </form>
                 </DropdownMenuItem>
               </DropdownMenuContent>

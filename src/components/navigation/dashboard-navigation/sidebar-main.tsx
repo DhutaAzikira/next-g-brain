@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, ChartLine, ChevronRight, Cog } from "lucide-react";
+import { BriefcaseBusiness, ChartLine, ChevronRight, Cog, FileText, Search } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -39,7 +39,9 @@ export function SidebarMain({
             const icon = {
               dashboard: <ChartLine className="size-4" />,
               work: <BriefcaseBusiness className="size-4" />,
+              search: <Search className="size-4" />,
               setting: <Cog className="size-4" />,
+              cv: <FileText className="size-4" />,
             };
 
             return (

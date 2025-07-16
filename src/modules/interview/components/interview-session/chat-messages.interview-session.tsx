@@ -10,11 +10,12 @@ import { Message } from "@/hooks/use-chat-messages";
 import { cn } from "@/utils/cn";
 import { duration, easing } from "@/utils/animation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { LoadingBubble, TurnStatus } from "@/components/shared/loading-bubble";
 
 interface ChatMessagesProps {
   messages: Message[];
   isLoading: boolean;
-  turnStatus: "ai" | "user" | "none";
+  turnStatus: TurnStatus
   className?: string;
 }
 
@@ -97,41 +98,5 @@ export function InterviewSessionChatMessages({
         )}
       </AnimatePresence>
     </>
-  );
-}
-
-function LoadingBubble({ turnStatus }: { turnStatus: ChatMessagesProps["turnStatus"] }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: 1,
-        transition: { delay: 0.5, duration: 0.5, ease: easing.in },
-      }}
-      exit={{ opacity: 0 }}
-      className={cn("flex gap-1 py-4", turnStatus === "user" ? "justify-end" : "justify-start")}
-    >
-      {Array.from({ length: 3 }).map((_, i) => {
-        const reverseIndex = 2 - i;
-
-        return (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: [0, 1, 1, 0],
-              transition: {
-                duration: 1.5,
-                delay: 0.5 + turnStatus === "user" ? reverseIndex : i * 0.1,
-                repeatDelay: 1,
-                ease: easing.out,
-                repeat: Infinity,
-              },
-            }}
-            className="bg-gradient-purple size-2 rounded-full"
-          />
-        );
-      })}
-    </motion.div>
   );
 }

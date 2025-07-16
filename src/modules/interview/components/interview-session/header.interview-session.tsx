@@ -63,7 +63,7 @@ export function InterviewSessionHeader({
         </AnimatePresence>
 
         {status === "disconnected" && <Button onClick={onStartClick}>Start Interview</Button>}
-        
+
         <div
           className={cn(
             "bg-muted size-fit w-24 rounded-full border px-3 py-2 text-center font-sans font-medium lining-nums transition-colors duration-500 md:px-5",

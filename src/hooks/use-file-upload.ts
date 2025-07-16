@@ -155,15 +155,15 @@ export const useFileUpload = (
         inputRef.current.value = ""
       }
 
-      const newState = {
+      return {
         ...prev,
         files: [],
         errors: [],
       }
-
-      onFilesChange?.(newState.files)
-      return newState
     })
+    
+    // Call onFilesChange after state update
+    setTimeout(() => onFilesChange?.([]), 0)
   }, [onFilesChange])
 
   const addFiles = useCallback(
@@ -240,7 +240,10 @@ export const useFileUpload = (
           const newFiles = !multiple
             ? validFiles
             : [...prev.files, ...validFiles]
-          onFilesChange?.(newFiles)
+          
+          // Call onFilesChange after state update
+          setTimeout(() => onFilesChange?.(newFiles), 0)
+          
           return {
             ...prev,
             files: newFiles,
@@ -287,7 +290,9 @@ export const useFileUpload = (
         }
 
         const newFiles = prev.files.filter((file) => file.id !== id)
-        onFilesChange?.(newFiles)
+        
+        // Call onFilesChange after state update
+        setTimeout(() => onFilesChange?.(newFiles), 0)
 
         return {
           ...prev,

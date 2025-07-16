@@ -91,14 +91,16 @@ export async function createInterviewScheduleAction(
       body: formDataPayload,
     });
 
-    console.log(response);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error);
-    }
-
     const data = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: "Gagal membuat jadwal interview",
+        errors: data,
+        inputs: state.inputs,
+      };
+    }
 
     return {
       success: true,

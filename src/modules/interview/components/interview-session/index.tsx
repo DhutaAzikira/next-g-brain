@@ -22,6 +22,15 @@ import { InterviewSessionUserControl } from "./user-control.interview-session";
 import { useUpdateEffect } from "@/hooks/use-update-effect";
 import { InterviewSessionCameraAI } from "./camera-ai.interview-session";
 import { sleep } from "@/utils/helper";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 
 interface InterviewSessionProps {
   sessionID: string;
@@ -47,8 +56,14 @@ export function InterviewSession({ sessionID }: InterviewSessionProps) {
   const [connectionStatus, setConnectionStatus] = useState("");
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const [buffer, setBuffer] = useState<Int16Array>(new Int16Array(4096));
-
-  // const recordedChunkRef = useRef<Int16Array<ArrayBufferLike>[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(true);
+  const [devices, setDevices] = useState<
+    {
+      deviceId: string;
+      label: string;
+      groupId: string;
+    }[]
+  >([]);
 
   const chat = useChatMessages();
   const timer = useTimerCountdown(10, warnTime);
@@ -129,10 +144,8 @@ export function InterviewSession({ sessionID }: InterviewSessionProps) {
   const audio = useAudioProcessor({
     onOpen: async () => {
       console.log("audio connected");
-      // recordedChunkRef.current = [];
     },
     onMessage: (buffer) => {
-      // recordedChunkRef.current.push(buffer);
       setBuffer(buffer);
     },
     onError: (error) => {
@@ -143,8 +156,10 @@ export function InterviewSession({ sessionID }: InterviewSessionProps) {
   useUpdateEffect(() => {
     const firstConnect = async () => {
       sidebar.toggleSidebar();
-      await camera.connect();
+      const deviceEnum = await audio.getAudioDevices();
+      setDevices(deviceEnum);
       await audio.connect();
+      await camera.connect();
     };
 
     firstConnect();
@@ -224,6 +239,51 @@ export function InterviewSession({ sessionID }: InterviewSessionProps) {
 
   return (
     <div className="relative flex size-full flex-col">
+      <Dialog open={isDialogOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Start Interview</DialogTitle>
+            <DialogDescription>Apakah Anda siap untuk memulai interview?</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-between">
+            {devices.length > 0 && (
+              <Select onValueChange={audio.switchDevice}>
+                <SelectTrigger>
+                  {devices.find((device) => device.deviceId === audio.currentDeviceId)?.label ||
+                    "Pilih Microphone"}
+                </SelectTrigger>
+
+                <SelectContent>
+                  {devices.map((device) => (
+                    <SelectItem key={device.deviceId} value={device.deviceId}>
+                      {device.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <Button
+              onClick={() => {
+                setIsDialogOpen(false);
+                setStatus("connecting");
+                setConnectionStatus("connecting to heygen");
+                heygen.connect();
+                setConnectionStatus("connecting to n8n");
+                n8n.connect();
+                setConnectionStatus("connecting to gladia");
+                gladia.connect();
+                setConnectionStatus("loading avatar");
+                getN8N(sessionID);
+              }}
+            >
+              Start Interview
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <InterviewSessionHeader
         status={status}
         timeLeft={timer.timeLeft}

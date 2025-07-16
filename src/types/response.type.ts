@@ -1,3 +1,28 @@
+export interface ICVScreeningReportResponse {
+  id: number,
+  full_name: string,
+  position: string,
+  score: number,
+  format_and_structure_score: number,
+  suitability_score: number,
+  experiences_score: number,
+  profile_summary_score: number,
+  work_experience_score: number,
+  education_score: number,
+  skills_score: number,
+  certifications_score: number,
+  projects_score: number,
+  achievements_score: number,
+  strengths: Array<string>;
+  weaknesses: Array<string>;
+  opportunities: Array<string>;
+  threats: Array<string>;
+  revisions: Array<{
+    label: string;
+    detail: string;
+  }>;
+}
+
 export interface IGoogleAuthResponse {
   key: string;
   user: {

@@ -14,8 +14,8 @@ import {
 import { handleActionError } from "@/lib/handler-action-error";
 import { flattenError } from "@/lib/zod";
 import { apiServer } from "@/lib/api-server";
-import { supabase } from "@/utils/supabase/client";
 import { IRegisterResponse } from "@/types/response.type";
+import { client } from "@/utils/supabase/client";
 
 type RegisterActionType = ActionState<RegisterSchemaType, string>;
 
@@ -125,7 +125,7 @@ export async function registerProfile(
       profile_picture?.size > 0 &&
       profile_picture?.type?.startsWith("image/")
     ) {
-      const supa = await supabase()
+      const supa = await client
         .storage.from(bucket)
         .upload(path, profile_picture as File);
 
@@ -168,7 +168,7 @@ export async function registerProfile(
     }
 
     if (!res.ok && profile_picture) {
-      await supabase().storage.from(bucket).remove([path]);
+      await client.storage.from(bucket).remove([path]);
     }
 
     return {

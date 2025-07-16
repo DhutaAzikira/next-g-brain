@@ -46,15 +46,35 @@ export const siteConfig = {
         icon: "dashboard",
         isActive: true,
         items: [
-          {
-            title: "Pusat kendali interview",
-            url: "/dashboard/interview/create",
-          },
-          {
-            title: "Jadwal Interview",
-            url: "/dashboard/interview/schedule",
-          },
+          // {
+          //   title: "Jadwal Interview",
+          //   url: "/dashboard/interview/schedule",
+          // },
         ],
+      },
+      {
+        title: "Cari Pekerjaan",
+        url: "/dashboard/search",
+        icon: "search",
+        isActive: false,
+        items: [
+          // {
+          //   title: "Jadwal Interview",
+          //   url: "/dashboard/interview/schedule",
+          // },
+        ],
+      },
+      {
+        title: "CV Screen",
+        url: "/dashboard/cv-screening",
+        icon: "cv",
+        isActive: false,
+        items: [
+          // {
+          //   title: "Jadwal Interview",
+          //   url: "/dashboard/interview/schedule",
+          // },
+        ] as { title: string; url: string }[],
       },
       {
         title: "Cari Pekerjaan",

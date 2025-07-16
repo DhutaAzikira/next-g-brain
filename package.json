@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "shadcn:add": "bunx --bun shadcn@latest add"
+    "shadcn:add": "pnpm dlx shadcn@latest add"
   },
   "dependencies": {
     "@heygen/streaming-avatar": "^2.0.16",
@@ -55,6 +55,7 @@
     "react-icons": "^5.5.0",
     "react-phone-number-input": "^3.4.12",
     "react-use-measure": "^2.1.7",
+    "recharts": "2.15.4",
     "sonner": "^2.0.5",
     "tailwind-clamp": "^4.0.18",
     "tailwind-merge": "^3.3.1",

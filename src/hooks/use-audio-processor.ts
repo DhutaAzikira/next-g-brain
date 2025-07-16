@@ -122,6 +122,7 @@ export function useAudioProcessor({
     setIsLoading(true);
     try {
       const deviceId = currentDeviceId || selectedDeviceId;
+      console.log(deviceId)
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate,
@@ -178,15 +179,15 @@ export function useAudioProcessor({
       setIsLoading(false);
     }
   }, [
+    currentDeviceId,
+    selectedDeviceId,
     bufferSize,
     cleanup,
-    currentDeviceId,
     isRecording,
     onError,
     onMessage,
     onOpen,
     sampleRate,
-    selectedDeviceId,
   ]);
 
   const stop = useCallback(() => {

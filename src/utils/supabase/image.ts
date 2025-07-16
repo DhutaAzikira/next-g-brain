@@ -1,5 +1,5 @@
-import { supabase } from "./client";
+import { client } from "./client";
 
 export function getSupabaseImage() {
-  return supabase().storage.from("user-profiles");
+  return client.storage.from("user-profiles");
 }

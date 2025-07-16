@@ -5,7 +5,7 @@ import { format } from "date-fns";
 
 import { handleActionError } from "@/lib/handler-action-error";
 import { flattenError } from "@/lib/zod";
-import { supabase } from "@/utils/supabase/client";
+import { client } from "@/utils/supabase/client";
 import { tryCatch } from "@/utils/try-catch";
 import { apiServer } from "@/lib/api-server";
 
@@ -57,7 +57,7 @@ export async function updateProfile(
       profile_picture?.size > 0 &&
       profile_picture?.type?.startsWith("image/")
     ) {
-      const supa = await supabase()
+      const supa = await client
         .storage.from(bucket)
         .upload(path, profile_picture as File);
 
@@ -98,7 +98,7 @@ export async function updateProfile(
     }
 
     if (!res.ok && profile_picture) {
-      await supabase().storage.from(bucket).remove([path]);
+      await client.storage.from(bucket).remove([path]);
     }
 
     console.log(res);
