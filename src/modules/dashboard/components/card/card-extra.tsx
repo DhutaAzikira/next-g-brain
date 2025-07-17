@@ -16,6 +16,7 @@ export function CardExtras() {
       description:
         "Atur jadwal simulasi wawancara sesuai waktu yang Anda inginkan",
       icon: <CalendarCheck />,
+      label: "Jadwal Interview",
       href: "/dashboard/interview/schedule",
     },
     {
@@ -23,12 +24,14 @@ export function CardExtras() {
       description:
         "Jelajahi peluang karir dan posisi yang sesuai dengan keahlian Anda",
       icon: <Briefcase />,
+      label: "Cari Pekerjaan",
       href: "/dashboard/work",
     },
     {
       title: "Pengaturan",
       description: "Kelola profil, preferensi, dan pengaturan akun Anda",
       icon: <Cog />,
+      label: "Pengaturan",
       href: "/dashboard/setting",
     }
   ];
@@ -85,7 +88,7 @@ export function CardExtras() {
                     linkVariants[item.title as keyof typeof linkVariants],
                   )}
                 >
-                  Lihat Jadwal
+                  {item.label}
                   <ArrowRight className="size-4" />
                 </Link>
               </CardAction>

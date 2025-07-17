@@ -21,9 +21,13 @@ export default async function DashboardPage() {
   ]);
 
   const user = session?.user;
-  const averageScore = interviews?.length
-    ? interviews?.reduce((acc, curr) => acc + (curr.skor_keseluruhan || 0), 0) / interviews?.length
-    : 0;
+  const averageScore = Math.round(
+    interviews?.length
+      ? interviews?.reduce((acc, curr) => acc + (curr.skor_keseluruhan || 0), 0) /
+          interviews?.length
+      : 0,
+  );
+
 
   return (
     <>

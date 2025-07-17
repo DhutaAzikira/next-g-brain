@@ -68,6 +68,13 @@ export async function register(
 
     const response = data as IRegisterResponse;
 
+    await apiServer({
+      method: "POST",
+      url: "/api/profile/",
+      headers: { Authorization: `Token ${response.token}` },
+      body: JSON.stringify({ email: data.email }),
+    });
+
     (await cookies()).set("register-token", response.token, { maxAge: 60 * 60 * 24 * 7 });
 
     return {
@@ -125,9 +132,7 @@ export async function registerProfile(
       profile_picture?.size > 0 &&
       profile_picture?.type?.startsWith("image/")
     ) {
-      const supa = await client
-        .storage.from(bucket)
-        .upload(path, profile_picture as File);
+      const supa = await client.storage.from(bucket).upload(path, profile_picture as File);
 
       if (supa.error) {
         console.log("supabase error", supa.error);
@@ -145,11 +150,19 @@ export async function registerProfile(
     const body = {
       ...restPayload,
       date_of_birth: format(new Date(date_of_birth), "yyyy-MM-dd"),
-      profile_picture: path,
+      profile_picture: profile_picture?.size && profile_picture.size > 0 ? path : null,
     };
 
+    const checkProfile = await apiServer({
+      method: "GET",
+      url: "/api/profile/",
+      headers: { Authorization: `Token ${token}` },
+    });
+
+    const isExistData = checkProfile.ok;
+
     const res = await apiServer({
-      method: "POST",
+      method: isExistData ? "PATCH" : "POST",
       url: "/api/profile/",
       headers: { Authorization: `Token ${token}` },
       body: JSON.stringify(body),

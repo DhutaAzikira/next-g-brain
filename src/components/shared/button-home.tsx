@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { LogoIcon } from "./svg-logo";
 
 export function ButtonHome() {
   return (
@@ -8,8 +8,7 @@ export function ButtonHome() {
       aria-label="Home"
       className="text-primary flex items-center gap-2 text-lg leading-none font-bold transition-opacity duration-500 hover:opacity-80 md:text-xl"
     >
-      <LogoIcon />
-      InterviewAI
+      <Image src="/images/LOGO 2.png" alt="Logo" width={100} height={60} />
     </Link>
   );
 }

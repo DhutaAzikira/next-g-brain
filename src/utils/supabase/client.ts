@@ -14,13 +14,13 @@ export const client = (() => {
     if (!supabaseUrl) {
       throw new Error("supabaseUrl is required.");
     }
-    
+
     // During build time, create a dummy client if key is missing
     if (!supabaseKey) {
       console.warn("Supabase key not found during build. Using placeholder.");
       return createClient(supabaseUrl, "placeholder-key-for-build");
     }
-    
+
     supabaseClient = createClient(supabaseUrl, supabaseKey);
   }
   return supabaseClient;

@@ -35,6 +35,8 @@ export function DashboardSidebar({
 }) {
   const { open } = useSidebar();
 
+  console.log(user?.image)
+  
   return (
     <Sidebar {...props} className={cn("z-20 font-sans", className)} collapsible="icon">
       <SidebarHeader>

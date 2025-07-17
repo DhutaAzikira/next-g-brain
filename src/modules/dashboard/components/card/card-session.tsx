@@ -154,7 +154,6 @@ export function CardSession({ showAll = false, sessions = [] }: CardSessionProps
                           <Button asChild size="sm">
                             <Link
                               href={`/dashboard/interview/${item.booking_code}`}
-                              target="_blank"
                               autoFocus
                             >
                               Mulai Sekarang

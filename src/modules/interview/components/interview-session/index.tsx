@@ -188,29 +188,14 @@ export function InterviewSession({ sessionID }: InterviewSessionProps) {
     }
   }, [turnStatus, buffer, isStart, status]);
 
-  // const assembleAndDownload = () => {
-  //   let totalLength = 0;
-  //   recordedChunkRef.current.forEach((chunk) => {
-  //     totalLength += chunk.length;
-  //   });
-
-  //   const assembledPcm = new Int16Array(totalLength);
-  //   let offset = 0;
-  //   recordedChunkRef.current.forEach((chunk) => {
-  //     assembledPcm.set(chunk, offset);
-  //     offset += chunk.length;
-  //   });
-
-  //   createAndDownloadWav(assembledPcm, 16000);
-  // };
-
   useEffect(() => {
     const interval = setInterval(() => {
       const int16 = new Int16Array(4096);
       const chunk = bufferToChunk(int16.buffer);
       const gladiaPayload: GladiaMessage = { type: "audio_chunk", data: { chunk } };
 
-      if (turnStatus === "ai" && isStart && status === "connected") {
+      if (turnStatus === "ai" && isStart && status === "connected" && gladia.isConnected) {
+        console.log("empty chunk")
         gladia.send(gladiaPayload);
       }
     }, 340);
@@ -332,10 +317,6 @@ export function InterviewSession({ sessionID }: InterviewSessionProps) {
               camera={camera}
               audio={audio}
               status={status}
-              onClick={() => {
-                setTurnStatus("user");
-                setIsLoadingChat(true);
-              }}
               className="rounded-t-none py-4 md:rounded-t-xl md:py-6"
             />
 
@@ -358,37 +339,3 @@ export function InterviewSession({ sessionID }: InterviewSessionProps) {
     </div>
   );
 }
-
-// function createAndDownloadWav(pcmData: Int16Array, sampleRate: number) {
-//   const header = new ArrayBuffer(44);
-//   const view = new DataView(header);
-
-//   view.setUint32(0, 0x52494646, false); // "RIFF"
-//   view.setUint32(4, 36 + pcmData.byteLength, true); // File size
-//   view.setUint32(8, 0x57415645, false); // "WAVE"
-//   view.setUint32(12, 0x666d7420, false); // "fmt "
-//   view.setUint32(16, 16, true); // Sub-chunk size
-//   view.setUint16(20, 1, true); // Audio format (1 for PCM)
-//   view.setUint16(22, 1, true); // Number of channels
-//   view.setUint32(24, sampleRate, true); // Sample rate
-//   view.setUint32(28, sampleRate * 2, true); // Byte rate
-//   view.setUint16(32, 2, true); // Block align
-//   view.setUint16(34, 16, true); // Bits per sample
-//   view.setUint32(36, 0x64617461, false); // "data"
-//   view.setUint32(40, pcmData.byteLength, true); // Data chunk size
-
-//   const blob = new Blob([view, pcmData], { type: "audio/wav" });
-//   const url = URL.createObjectURL(blob);
-
-//   const a = document.createElement("a");
-//   a.style.display = "none";
-//   a.href = url;
-//   a.download = `recording.wav`;
-//   document.body.appendChild(a);
-//   a.click();
-
-//   setTimeout(() => {
-//     document.body.removeChild(a);
-//     URL.revokeObjectURL(url);
-//   }, 100);
-// }

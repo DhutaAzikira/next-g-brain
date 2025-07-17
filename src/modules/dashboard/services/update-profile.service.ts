@@ -12,6 +12,8 @@ import { apiServer } from "@/lib/api-server";
 import { ActionState } from "@/types/action.type";
 import { updateProfileSchema, UpdateProfileSchemaType } from "../schemas/update-profile.schema";
 import { UserType } from "@/types/auth.type";
+import { signIn } from "@/auth";
+import { revalidatePath } from "next/cache";
 
 type UpdatedUserType = Pick<
   UserType,
@@ -31,9 +33,9 @@ export async function updateProfile(
       gender: formData.get("gender") as UpdateProfileSchemaType["gender"],
       bio: formData.get("bio") as string,
       profile_picture: formData.get("profile_picture") as File,
+      password: formData.get("password") as string,
+      username: formData.get("username") as string,
     };
-
-    console.log(payload);
 
     const validateData = await updateProfileSchema.safeParseAsync(payload);
 
@@ -57,9 +59,7 @@ export async function updateProfile(
       profile_picture?.size > 0 &&
       profile_picture?.type?.startsWith("image/")
     ) {
-      const supa = await client
-        .storage.from(bucket)
-        .upload(path, profile_picture as File);
+      const supa = await client.storage.from(bucket).upload(path, profile_picture as File);
 
       if (supa.error) {
         console.log("supabase error", supa.error);
@@ -75,8 +75,8 @@ export async function updateProfile(
 
     const body = {
       ...rest,
+      ...((profile_picture?.size || 0) > 0 && { profile_picture: path }),
       date_of_birth: format(new Date(date_of_birth), "yyyy-MM-dd"),
-      profile_picture: path,
     };
 
     const [res, err] = await tryCatch(
@@ -101,13 +101,20 @@ export async function updateProfile(
       await client.storage.from(bucket).remove([path]);
     }
 
-    console.log(res);
+    await signIn("credentials", {
+      username: payload.username,
+      password: payload.password,
+      remember: true,
+      redirect: false,
+    });
+
+    revalidatePath("/dashboard/setting");
 
     return {
       success: true,
       message: "Berhasil memperbarui profil",
       data: {
-        profile_picture: path,
+        profile_picture: profile_picture?.size && profile_picture?.size > 0 ? path : "",
         full_name: body.full_name,
         phone_number: body.phone_number,
         date_of_birth: body.date_of_birth,

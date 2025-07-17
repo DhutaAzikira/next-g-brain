@@ -6,7 +6,7 @@ import Link from "next/link";
 import { FaFile } from "react-icons/fa";
 
 export async function CardCVHistory({ data }: { data: ICVScreeningReportResponse[] | null }) {
-  if (!data) {
+  if (!data || data.length === 0) {
     return null;
   }
 

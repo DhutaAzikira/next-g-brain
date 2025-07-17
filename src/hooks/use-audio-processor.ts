@@ -122,7 +122,7 @@ export function useAudioProcessor({
     setIsLoading(true);
     try {
       const deviceId = currentDeviceId || selectedDeviceId;
-      console.log(deviceId)
+      console.log(deviceId);
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate,
@@ -220,10 +220,6 @@ export function useAudioProcessor({
       connect();
     }
   }, [isRecording, connect, stop]);
-
-  useEffect(() => {
-    getAudioDevices();
-  }, [getAudioDevices]);
 
   useEffect(() => {
     if (selectedDeviceId) {
